@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#07101f">
+  <title>Virtual Sammy Theaters 1.4 Rebuild — The Ultimate Theater Update</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="boot" class="boot">
+    <div class="boot-card">
+      <div class="eyebrow">VIRTUAL SAMMY THEATERS</div>
+      <h1>Version 1.4 Rebuild — The Ultimate Theater Update</h1>
+      <p class="lead">A compatibility-first first-person rebuild with a real navigable lobby, desktop movement, mobile joystick + look controls, working menus, concessions, arcade, auditoriums, 4DS controls, and AI Outpaint presentation modes.</p>
+
+      <div class="setup-grid">
+        <label>Local screening file
+          <input id="setupFile" type="file" accept="video/*,image/*">
+        </label>
+
+        <label>Premium format
+          <select id="setupFormat"></select>
+        </label>
+
+        <label>Starting auditorium
+          <select id="setupAuditorium">
+            <option value="1">Auditorium 1</option>
+            <option value="2">Auditorium 2</option>
+            <option value="3">Auditorium 3</option>
+          </select>
+        </label>
+
+        <label>Starting seat
+          <select id="setupSeat"></select>
+        </label>
+      </div>
+
+      <div class="setup-actions">
+        <button id="runStartupTest">RUN STARTUP TEST</button>
+        <button id="startButton" class="primary">ENTER THEATER</button>
+      </div>
+
+      <div id="bootStatus" class="status">Ready.</div>
+    </div>
+  </section>
+
+  <main id="game" class="hidden">
+    <canvas id="world" width="1280" height="720"></canvas>
+
+    <header class="hud">
+      <strong>🎬 Virtual Sammy Theaters 1.4 Rebuild</strong>
+      <span id="zoneLabel">Main Lobby</span>
+      <span id="formatLabel">Standard Digital</span>
+      <span id="seatLabel">Seat A1</span>
+      <span id="ticketLabel">Arcade Tickets: 0</span>
+    </header>
+
+    <nav class="toolbar">
+      <button data-panel="screenings">🎞️ Screenings</button>
+      <button data-panel="concessions">🍿 Concessions</button>
+      <button data-panel="arcade">🕹️ Arcade</button>
+      <button data-panel="fourD">💺 4DS</button>
+      <button data-panel="outpaint">🖼️ Outpaint</button>
+      <button data-panel="avatar">🧍 Avatar</button>
+      <button data-panel="seasonal">🎃 Seasonal</button>
+      <button data-panel="profile">💾 Profile</button>
+      <button data-panel="tests">🧪 Test Center</button>
+      <button id="mobileToggle">📱 Mobile Controls</button>
+    </nav>
+
+    <div id="crosshair" class="crosshair">+</div>
+    <div id="interactionPrompt" class="interaction-prompt">Walk around the lobby</div>
+
+    <div id="mobileControls" class="mobile-controls">
+      <div id="joystickArea" class="joystick-area">
+        <div class="joystick-base">
+          <div id="joystickStick" class="joystick-stick"></div>
+        </div>
+      </div>
+      <div id="lookArea" class="look-area">
+        <span>SWIPE TO LOOK</span>
+      </div>
+      <div class="mobile-right">
+        <button id="mobileInteract" class="interact">INTERACT</button>
+        <button id="mobileReset">RESET</button>
+      </div>
+    </div>
+
+    <div class="desktop-hint">WASD / arrows = move • mouse/drag = look • E = interact • M = toggle mobile controls</div>
+
+    <section id="panel" class="panel" aria-hidden="true">
+      <button id="closePanel" class="close">×</button>
+
+      <div class="page" data-page="screenings">
+        <h2>🎞️ Screening Control Center</h2>
+        <div class="settings-grid">
+          <label>Local media <input id="panelFile" type="file" accept="video/*,image/*"></label>
+          <label>Auditorium
+            <select id="panelAuditorium">
+              <option value="1">Auditorium 1</option>
+              <option value="2">Auditorium 2</option>
+              <option value="3">Auditorium 3</option>
+            </select>
+          </label>
+          <label>Premium format <select id="panelFormat"></select></label>
+          <label>Seat <select id="panelSeat"></select></label>
+        </div>
+        <div class="row">
+          <button id="playButton" class="primary">PLAY</button>
+          <button id="pauseButton">PAUSE</button>
+          <button id="stopButton">STOP</button>
+          <button id="goAuditoriumButton">GO TO AUDITORIUM</button>
+        </div>
+        <video id="media" controls playsinline></video>
+        <div id="screeningStatus" class="status">No local media loaded.</div>
+      </div>
+
+      <div class="page" data-page="concessions">
+        <h2>🍿 Working Concessions</h2>
+        <div id="foodGrid" class="grid"></div>
+        <h3>Self-Serve Drinks</h3>
+        <div class="row">
+          <select id="drinkFlavor">
+            <option>Cola</option>
+            <option>Lemon-Lime</option>
+            <option>Orange</option>
+            <option>Blue Raspberry</option>
+            <option>Fruit Punch</option>
+          </select>
+          <select id="drinkSize">
+            <option>Small</option><option>Medium</option><option>Large</option>
+          </select>
+          <button id="fillDrink">FILL FOUNTAIN DRINK</button>
+          <button id="fillFrozen">FILL FROZEN DRINK</button>
+        </div>
+
+        <div class="cup">
+          <div id="cupFill"></div>
+          <span id="cupLabel">EMPTY CUP</span>
+        </div>
+
+        <div class="row">
+          <button id="eatFood">EAT HELD FOOD</button>
+          <button id="drinkHeld">DRINK</button>
+          <button id="placeCup">PLACE IN CUP HOLDER</button>
+        </div>
+        <div id="heldStatus" class="status">Hands empty.</div>
+      </div>
+
+      <div class="page" data-page="arcade">
+        <h2>🕹️ Second-Floor Mega Arcade</h2>
+        <p>Claw machines, original arcade games, motion simulators, and prize tickets.</p>
+        <div id="arcadeGrid" class="grid"></div>
+
+        <div id="arcadeGame" class="mini-game hidden">
+          <h3 id="arcadeTitle">Arcade Game</h3>
+          <canvas id="arcadeCanvas" width="800" height="420"></canvas>
+          <div class="row">
+            <button id="arcadeLeft">◀</button>
+            <button id="arcadeAction">ACTION</button>
+            <button id="arcadeRight">▶</button>
+            <button id="arcadeExit">EXIT GAME</button>
+          </div>
+          <div id="arcadeScore" class="status">Score: 0</div>
+        </div>
+      </div>
+
+      <div class="page" data-page="fourD">
+        <h2>💺 Sammy's 4DS Motion Engine 2.0</h2>
+        <label>Master intensity
+          <input id="master4D" type="range" min="0" max="100" value="75">
+          <span id="master4DValue">75%</span>
+        </label>
+        <div id="effectGrid" class="grid compact"></div>
+        <div class="row">
+          <button id="motionLeft">TURN LEFT</button>
+          <button id="motionRight">TURN RIGHT</button>
+          <button id="motionForward">TILT FORWARD</button>
+          <button id="motionBack">TILT BACK</button>
+          <button id="motionVibrate">VIBRATE</button>
+          <button id="motionStop" class="danger">STOP ALL MOTION</button>
+        </div>
+        <div id="seatPreview" class="seat-preview">💺</div>
+        <div id="fourDStatus" class="status">4DS ready.</div>
+      </div>
+
+      <div class="page" data-page="outpaint">
+        <h2>🖼️ AI Outpaint Studio</h2>
+        <label>Presentation mode
+          <select id="outpaintMode">
+            <option value="185">1.85:1</option>
+            <option value="190">1.90:1</option>
+            <option value="200">2.00:1</option>
+            <option value="239" selected>2.39:1</option>
+            <option value="143">1.43:1</option>
+            <option value="270">270° Immersive</option>
+            <option value="360">360° Immersive</option>
+          </select>
+        </label>
+        <label>Quality
+          <select id="outpaintQuality">
+            <option>Fast Preview</option>
+            <option selected>Balanced</option>
+            <option>High Quality</option>
+          </select>
+        </label>
+        <label><input id="protectFrame" type="checkbox" checked> Protect original frame</label>
+
+        <div id="outpaintPreview" class="outpaint-preview mode-239">
+          <div class="edge left">AI EXTENSION</div>
+          <div class="original">ORIGINAL FRAME</div>
+          <div class="edge right">AI EXTENSION</div>
+          <div class="rear">AI REAR EXTENSION</div>
+        </div>
+
+        <div class="row">
+          <button id="applyOutpaint">APPLY PREVIEW</button>
+          <button id="requestOutpaint" class="primary">REQUEST AI OUTPAINT</button>
+        </div>
+        <div id="outpaintStatus" class="status">Preview ready. Real generation requires the configured secure backend.</div>
+      </div>
+
+      <div class="page" data-page="avatar">
+        <h2>🧍 Avatar Studio</h2>
+        <div class="settings-grid">
+          <label>Name <input id="avatarName" value="Guest" maxlength="18"></label>
+          <label>Hair
+            <select id="avatarHair">
+              <option>Short</option><option>Curly</option><option>Long</option><option>Buzz</option><option>Ponytail</option>
+            </select>
+          </label>
+          <label>Outfit
+            <select id="avatarOutfit">
+              <option>Sammy Theater Tee</option>
+              <option>Arcade Jacket</option>
+              <option>Summerween Hoodie</option>
+              <option>Sumsgiving Sweater</option>
+              <option>Summas Sweater</option>
+            </select>
+          </label>
+          <label>Accessory
+            <select id="avatarAccessory">
+              <option>None</option><option>3D Glasses</option><option>Popcorn Hat</option>
+              <option>Pumpkin Pin</option><option>Turkey Pin</option><option>Snowflake Pin</option>
+            </select>
+          </label>
+        </div>
+        <div id="avatarPreview" class="avatar-preview">🧍 Guest</div>
+        <button id="saveAvatar" class="primary">SAVE AVATAR</button>
+      </div>
+
+      <div class="page" data-page="seasonal">
+        <h2>🎃🦃🎄 Seasonal Hub</h2>
+        <div class="grid">
+          <button data-season="standard">Standard Theater</button>
+          <button data-season="summerween">🎃 Summerween</button>
+          <button data-season="sumsgiving">🦃 Sumsgiving</button>
+          <button data-season="summas">🎄 Summas</button>
+        </div>
+        <div id="seasonStatus" class="status">Standard Theater active.</div>
+      </div>
+
+      <div class="page" data-page="profile">
+        <h2>💾 Local Profile</h2>
+        <div class="row">
+          <button id="saveProfile" class="primary">SAVE PROFILE</button>
+          <button id="loadProfile">LOAD PROFILE</button>
+          <button id="resetProfile" class="danger">RESET PROFILE</button>
+        </div>
+        <div id="profileStatus" class="status">No action yet.</div>
+      </div>
+
+      <div class="page" data-page="tests">
+        <h2>🧪 1.4 Rebuild Test Center</h2>
+        <button id="runTests" class="primary">RUN ALL TESTS</button>
+        <div id="testResults" class="test-results"></div>
+      </div>
+    </section>
+
+    <div id="toast" class="toast" role="status"></div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
